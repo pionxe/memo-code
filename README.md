@@ -66,6 +66,7 @@ memo
 - Version: `memo --version` or `memo -v`.
 - Start web server: `memo web --host 127.0.0.1 --port 5494 --open` (npm package already includes web assets; source checkout needs `pnpm run build`).
 - Startup project guidance: if `AGENTS.md` exists in the startup root, Memo appends it to the system prompt automatically.
+- User personality guidance: if `$MEMO_HOME/SOUL.md` (or `~/.memo/SOUL.md`) exists, Memo injects it as a soft preference layer for personality/tone/style. It never overrides safety rules, tool policy, `AGENTS.md`, or explicit turn instructions; keep it concise to avoid prompt bloat.
 - Skills: Memo auto-discovers `SKILL.md` files and appends an available-skills section into the system prompt.
 - MCP activation selection: when MCP servers are configured, startup shows a multi-select to activate servers for this run.
 - Web app supports multi-workspace project management and concurrent live sessions (up to 20 per server process).

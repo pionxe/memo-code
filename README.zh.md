@@ -62,6 +62,7 @@ memo
 - 查看版本：`memo --version` 或 `memo -v`。
 - 启动 Web 服务：`memo web --host 127.0.0.1 --port 5494 --open`（npm 分发包已包含 web 资源；源码运行需先 `pnpm run build`）。
 - 启动目录约定：若启动根目录存在 `AGENTS.md`，Memo 会自动将其拼接进系统提示词。
+- 用户人格约定：若 `$MEMO_HOME/SOUL.md`（或 `~/.memo/SOUL.md`）存在，Memo 会将其作为人格/语气/风格的软偏好层注入系统提示词。它不会覆盖安全规则、工具策略、`AGENTS.md` 约束或当轮用户明确指令；建议保持内容简洁，避免提示词膨胀。
 - Skills：Memo 会自动发现 `SKILL.md` 并把可用 skills 列表拼接进系统提示词。
 - MCP 启动选择：当配置了 MCP server 时，启动会弹出多选以决定本次会话激活哪些 server。
 - Web app 支持多 workspace 项目管理，并可并发运行多个会话（单个 server 进程上限 20）。

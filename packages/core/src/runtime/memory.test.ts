@@ -120,6 +120,45 @@ describe('runtime prompt injection', () => {
         }
     })
 
+    test('injects SOUL.md before startup root AGENTS.md in system prompt', async () => {
+        const projectRoot = await makeTempDir('memo-core-soul-order-project')
+        const soulPath = join(tempHome, 'SOUL.md')
+        const agentsPath = join(projectRoot, 'AGENTS.md')
+        const soulMarker = 'memo-test-soul-style-preference'
+        const agentsMarker = 'memo-test-agents-constraint'
+        await writeFile(soulPath, `# Soul\n\n- ${soulMarker}\n`, 'utf-8')
+        await writeFile(agentsPath, `# Project Rules\n\n- ${agentsMarker}\n`, 'utf-8')
+
+        const session = await createAgentSession(
+            {
+                callLLM: async () => ({
+                    content: [{ type: 'text', text: 'ok' }],
+                    stop_reason: 'end_turn',
+                }),
+                loadPrompt: () => loadSystemPrompt({ cwd: projectRoot, memoHome: tempHome }),
+                historySinks: [],
+                tokenCounter: createTokenCounter('cl100k_base'),
+            },
+            { mode: 'interactive' },
+        )
+
+        try {
+            const systemPrompt = session.history[0]?.content ?? ''
+            assert.ok(systemPrompt.includes('## User Personality Context (SOUL.md)'))
+            assert.ok(systemPrompt.includes(soulPath))
+            assert.ok(systemPrompt.includes(soulMarker))
+            assert.ok(systemPrompt.includes(agentsMarker))
+            const soulIndex = systemPrompt.indexOf('## User Personality Context (SOUL.md)')
+            const agentsIndex = systemPrompt.indexOf('## Project AGENTS.md (Startup Root)')
+            assert.ok(soulIndex >= 0)
+            assert.ok(agentsIndex > soulIndex)
+        } finally {
+            await session.close()
+            await removeDir(projectRoot)
+            await rm(soulPath, { force: true })
+        }
+    })
+
     test('appends discovered skills into system prompt', async () => {
         const projectRoot = await makeTempDir('memo-core-skills-project')
         const skillsRoot = join(projectRoot, '.codex', 'skills')

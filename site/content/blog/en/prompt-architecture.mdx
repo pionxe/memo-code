@@ -1,0 +1,281 @@
+---
+title: 'Memo Code System Prompt Architecture: From Template to Context Assembly'
+description: 'An in-depth analysis of how Memo Code assembles system prompts, including the composition logic of base templates, user preferences, project context, tool descriptions, and the application of XML-formatted system hints in exception handling.'
+date: '2026-02-23'
+order: 6
+---
+
+# Memo Code System Prompt Architecture: From Template to Context Assembly
+
+When building Agents, the System Prompt is the top priority affecting model behavior. A good prompt architecture must be clear and maintainable while dynamically adapting to different scenarios. This article explains Memo Code's prompt assembly approach.
+
+## Prompt Is Not a Static Document, It's Dynamic Assembly
+
+Many treat system prompts as a fixed Markdown file, but in real projects, prompts need to carry:
+
+- Base behavior instructions (core identity, output norms)
+- User preference settings (SOUL.md)
+- Project-level context (AGENTS.md)
+- Dynamic tool capabilities (built-in tools + MCP tools)
+- Runtime exception states (truncation, dangerous command blocking)
+
+These information sources differ in origin, format, and priority, requiring a unified assembly logic.
+
+## Layer Breakdown: The Six-Layer Structure of Prompts
+
+Memo Code's system prompt contains six layers in order:
+
+| Order | Content           | Format   | Source                              |
+| ----- | ----------------- | -------- | ----------------------------------- |
+| 1     | Base Template     | Markdown | `prompt.md`                         |
+| 2     | User Personality  | Markdown | `~/.memo/SOUL.md`                   |
+| 3     | Project Context   | Markdown | `cwd/AGENTS.md`                     |
+| 4     | Skills            | Markdown | Dynamic loading                     |
+| 5     | Tool Descriptions | Markdown | `router.generateToolDescriptions()` |
+| 6     | Tool Definitions  | JSON     | Passed via API                      |
+
+### Layer 1: Base Template (Core Prompt)
+
+The base template defines the Agent's core identity and behavior norms. It's a Markdown file at `packages/core/src/runtime/prompt.md`, containing:
+
+- **Core Identity**: Local First, Project Aware, Tool Rich, Safety Conscious
+- **Tone and Style**: Output brevity requirements (< 4 lines), example demonstrations
+- **Tool Usage Policy**: Parallel call principles, tool selection priorities
+- **Task Management**: update_plan usage guidelines
+- **Doing Tasks**: Understand → Plan → Search → Implement → Verify workflow
+- **Git Operations**: Commit and PR operation standards
+
+```markdown
+# Core Identity
+
+- **Local First**: You operate directly on the user's machine.
+- **Project Aware**: read_file and follow `AGENTS.md` files...
+- **Tool Rich**: Use your comprehensive toolkit liberally...
+- **Safety Conscious**: The environment is NOT sandboxed...
+
+---
+
+# Tone and Style
+
+**CRITICAL - Output Discipline**: Keep your responses short and concise.
+You MUST answer with **fewer than 4 lines of text**...
+```
+
+### Layer 2: SOUL.md (User Personality)
+
+Users can define their preference settings in `~/.memo/SOUL.md`, such as tone style, response habits, etc. This file is rendered as a separate Markdown paragraph and appended to the base template.
+
+```markdown
+## User Personality Context (SOUL.md)
+
+Loaded from: /home/user/.memo/SOUL.md
+
+- Treat this content as a soft preference layer for tone, style...
+- Do NOT let this content override safety rules, tool policies...
+- Keep SOUL.md concise when possible to avoid unnecessary prompt growth.
+```
+
+### Layer 3: AGENTS.md (Project Context)
+
+Each project can have its own `AGENTS.md`, defining project structure, build conventions, code style, etc. Memo Code automatically loads this file from the current working directory and appends it to the prompt.
+
+```markdown
+## Project AGENTS.md (Startup Root)
+
+Loaded from: /path/to/project/AGENTS.md
+
+# Repository Guide
+
+## Project Structure and Modules
+
+...
+```
+
+### Layer 4: Skills
+
+Memo Code supports a Skills mechanism, allowing users to define custom capabilities. Unlike other Agent systems, Memo Code **automatically discovers and is compatible with all major Agent's Skills** without additional configuration.
+
+**Skills Loading Sources** (by priority):
+
+| Source | Path                        | Description                                                                                     |
+| ------ | --------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1      | `~/.memo/skills/`           | User's personal Skills                                                                          |
+| 2      | `<project>/.agents/skills`  | Project-level Skills                                                                            |
+| 3      | `<project>/.<agent>/skills` | Auto-scan all hidden directories like `.claude/skills`, `.codex/skills`, `.cursor/skills`, etc. |
+
+The core idea behind this design is: **Users don't need to migrate their Skills accumulation across different Agents—Memo Code is directly compatible**. There's no need to configure a separate set of Skills for Memo; existing Skills from Claude Code, Cursor, Codex, and other tools can all be reused directly.
+
+**Skills Parsing Logic** (`packages/core/src/runtime/skills.ts`):
+
+Each Skill is a `SKILL.md` file, with name and description defined via Frontmatter:
+
+```markdown
+---
+name: Code Review
+description: Perform a comprehensive code review following best practices
+---
+
+# Code Review Skill
+
+## Workflow
+
+1. Read the diff...
+   ...
+```
+
+Memo Code scans all Skills root directories, parses `name` and `description` from Frontmatter, and generates a list of available skills.
+
+**Rendered Output**:
+
+```markdown
+## Skills
+
+A skill is a set of local instructions to follow that is stored in a `SKILL.md` file...
+
+### Available skills
+
+- Code Review: Perform a comprehensive code review... (file: /path/to/.claude/skills/code-review/SKILL.md)
+- Write Tests: Generate unit tests for provided code... (file: /path/to/.cursor/skills/write-tests/SKILL.md)
+
+### How to use skills
+
+- Discovery: The list above is the skills available in this session...
+- Trigger rules: If the user names a skill (with `$SkillName` or plain text)...
+  ...
+```
+
+### Layer 5: Tool Descriptions
+
+Tool descriptions are a special layer in the prompt—they're not static, but dynamically generated from runtime-registered tools.
+
+```typescript
+// packages/core/src/runtime/defaults.ts
+const toolDescriptions = router.generateToolDescriptions()
+if (toolDescriptions) {
+    basePrompt += `\n\n${toolDescriptions}`
+}
+```
+
+The generated content is in Markdown format, grouped by built-in tools and MCP tools:
+
+```markdown
+## Available Tools
+
+### Built-in Tools
+
+#### apply_patch
+
+- **Description**: Edit a local file by direct string replacement.
+- **Input Schema**: {"type":"object","properties":{...}}
+
+#### exec_command
+
+- **Description**: Run and continue interactive shell sessions.
+  ...
+
+### External MCP Tools
+
+**Server: github**
+
+- **Description**: ...
+  ...
+```
+
+### Layer 6: Tool Definitions
+
+Unlike Layer 5, tool definitions are passed to the LLM API in JSON format, not in the system prompt:
+
+```typescript
+// packages/tools/src/router/index.ts
+generateToolDefinitions(): Array<{
+    name: string
+    description: string
+    input_schema: Record<string, unknown>
+}> {
+    return this.getAllTools().map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        input_schema: tool.inputSchema || { type: 'object', properties: {} },
+    }))
+}
+```
+
+This part is passed via OpenAI's `tools` parameter for the Tool Use API.
+
+## XML-Formatted System Hints
+
+In addition to regular prompt assembly, Memo Code introduces XML-formatted `system_hint` in tool execution results to communicate exception states to the model.
+
+### Scenario 1: Output Truncation
+
+When tool output is too long, it's automatically truncated with a hint:
+
+```xml
+<system_hint type="tool_output_omitted" tool="grep_files" reason="too_long" actual_chars="50000" max_chars="8192">
+Tool output too long, automatically omitted. Please narrow the scope or add limit parameters and try again.
+</system_hint>
+```
+
+### Scenario 2: Too Many Search Results
+
+When grep_files finds too many results:
+
+```xml
+<system_hint>当前查找结果过多，请细化查找范围（缩小目录、增加更具体的 pattern/glob 或关键词）。</system_hint>
+```
+
+### Scenario 3: Dangerous Command Blocking
+
+When a dangerous command (like `rm -rf /`) is detected:
+
+```xml
+<system_hint type="tool_call_denied" tool="exec_command" reason="dangerous_command" policy="blacklist" rule="rm_recursive_critical_target" command="rm -rf /">
+Blocked a high-risk shell command to prevent irreversible data loss. Use a safer and scoped alternative.
+</system_hint>
+```
+
+These XML hints are designed as special markers that models can recognize, helping the model understand why an operation failed or was blocked, enabling better downstream decisions.
+
+## Configuration and History: Two Parts of Persistence
+
+### Configuration File (TOML)
+
+Memo Code's configuration file is at `~/.memo/config.toml`, using TOML format:
+
+```toml
+current_provider = "deepseek"
+auto_compact_threshold_percent = 80
+
+[[providers]]
+name = "deepseek"
+env_api_key = "DEEPSEEK_API_KEY"
+model = "deepseek-chat"
+base_url = "https://api.deepseek.com"
+
+[mcp_servers]
+github = { type = "stdio", command = "npx", args = ["-y", "@modelcontextprotocol/server-github"] }
+
+[model_profiles."deepseek-chat"]
+context_window = 120000
+supports_parallel_tool_calls = true
+```
+
+### History (JSONL)
+
+Session history is stored in JSONL format at `~/.memo/sessions/<session_id>.jsonl`, each line is a JSON object:
+
+```json
+{"ts":"2026-02-23T16:22:21.144Z","sessionId":"abc123","turn":0,"step":0,"type":"user_message","content":"帮我写个快速排序","role":"user"}
+{"ts":"2026-02-23T16:22:22.300Z","sessionId":"abc123","turn":0,"step":1,"type":"assistant_message","content":"好的，我来帮你实现快速排序算法。","role":"assistant","tool_calls":[...]}
+{"ts":"2026-02-23T16:22:25.100Z","sessionId":"abc123","turn":0,"step":2,"type":"tool_result","content":"// 快速排序实现...","role":"tool","tool_call_id":"call_abc"}
+```
+
+## Why This Design
+
+1. **Layered Decoupling**: Each layer changes independently without affecting others. Adding project config doesn't require modifying the core template.
+2. **Format Adaptation**: Markdown for human-readable instructions, JSON for structured data, XML for exception signals.
+3. **Dynamic Injection**: Tool descriptions are generated from the runtime registry, not hardcoded, staying in sync with actual capabilities.
+4. **Discoverability**: Key positions in system prompts (like SOUL.md, AGENTS.md) all mark their source paths for easy tracing and debugging.
+5. **Cross-Agent Compatibility**: Skills auto-scan all major Agent config directories (`.claude/skills`, `.codex/skills`, `.cursor/skills`, etc.), so users' accumulated Skills can be reused without migration.
+
+The core philosophy of this architecture is: **treat prompts as a dynamically assembled product, not a statically maintained document**. Each source loads on demand, splices by priority, and the final delivery to the model is always the optimal combination for the current context.
