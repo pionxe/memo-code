@@ -17,6 +17,11 @@
   <a href="README.md">English</a>
 </p>
 
+<p align="center">
+  🌐 <strong>官方网站</strong>: <a href="https://memo.mcell.top/">https://memo.mcell.top/</a><br>
+  📚 <strong>完整文档</strong>: <a href="https://memo.mcell.top/zh/docs/getting-started/">https://memo.mcell.top/zh/docs/getting-started/</a>
+</p>
+
 <img src="public/demo.png" width="100%" alt="Memo Code 演示图">
 
 ## 🌱 起源

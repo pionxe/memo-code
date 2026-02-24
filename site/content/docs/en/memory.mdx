@@ -1,0 +1,298 @@
+---
+title: 'Memory System'
+description: 'Use persistent memory to store user preferences and project context.'
+order: 10
+category: 'Core Features'
+---
+
+# Memory System
+
+Memo's memory system allows you to store persistent user preferences, project context, and important information that remains consistent across sessions.
+
+## Overview
+
+The memory system is implemented through the `get_memory` tool, which reads stored information from a local `Agents.md` file. This enables:
+
+- Maintaining user preferences across sessions
+- Storing project-specific context and conventions
+- Recording important decisions and patterns
+
+## Memory File Location
+
+Default location:
+
+```
+~/.memo/Agents.md
+```
+
+When `MEMO_HOME` environment variable is set:
+
+```
+$MEMO_HOME/Agents.md
+```
+
+## Enabling Memory Tool
+
+The memory tool is enabled by default. You can control it via environment variable:
+
+```bash
+# Disable memory tool
+export MEMO_ENABLE_MEMORY_TOOL=0
+```
+
+## Agents.md Format
+
+Agents.md is a Markdown file that can contain any structured information. Memo returns the entire file content as memory.
+
+### Basic Structure
+
+```markdown
+# Agent Memories
+
+## User Preferences
+
+- Output style: Concise and technical
+- Preferred language: TypeScript
+- Code style: 2-space indentation, single quotes
+
+## Project Context
+
+- Main framework: React + Next.js
+- Testing framework: Vitest
+- State management: Zustand
+
+## Important Decisions
+
+- 2024-01-15: Migrated from Redux to Zustand
+- 2024-02-01: Adopted pnpm for package management
+```
+
+### Suggested Organization
+
+Organize memories by category:
+
+```markdown
+# Agent Memories
+
+## Personal Preferences
+
+- Communication style
+- Code review preferences
+- Documentation standards
+
+## Technology Stack
+
+- Primary languages and frameworks
+- Preferred tools and libraries
+- Build and deployment preferences
+
+## Project Conventions
+
+- Naming conventions
+- Directory structure
+- Git workflow
+
+## Important Notes
+
+- Known issues and workarounds
+- Security considerations
+- Performance guidelines
+```
+
+## Using Memory in Sessions
+
+### Automatic Access
+
+When the memory tool is enabled, Memo can call `get_memory` as needed to retrieve stored information.
+
+### Tool Details
+
+**Tool Name**: `get_memory`
+
+**Parameters**:
+
+- `memory_id` (string, required): Identifier for the memory call
+
+**Return Value**:
+
+```json
+{
+    "memory_id": "thread-1",
+    "memory_summary": "## Agent Memories\n\n- User prefers concise output..."
+}
+```
+
+**Error Handling**:
+
+If the Agents.md file doesn't exist or cannot be read:
+
+```json
+"memory not found for memory_id=thread-1"
+```
+
+## Use Cases
+
+### 1. User Preferences
+
+Record your coding and communication preferences:
+
+```markdown
+## User Preferences
+
+- Prefer functional programming patterns
+- Like detailed comments for complex logic
+- Want to see multiple solution options when applicable
+- Prefer async/await over promises
+```
+
+### 2. Project Conventions
+
+Store project-specific conventions and patterns:
+
+```markdown
+## Project Conventions
+
+- Use named exports instead of default exports
+- Place tests next to source files (co-location)
+- Use CSS modules for styling
+- Follow conventional commits for git messages
+```
+
+### 3. Architecture Decisions
+
+Record important architectural decisions and their rationale:
+
+```markdown
+## Architecture Decisions
+
+- Monorepo structure using pnpm workspaces
+- API layer uses tRPC for type safety
+- Database: PostgreSQL with Prisma ORM
+- Caching: Redis for session storage
+```
+
+### 4. Common Commands
+
+Store frequently used project commands:
+
+````markdown
+## Common Commands
+
+```bash
+# Development
+pnpm dev
+
+# Testing
+pnpm test
+pnpm test:watch
+
+# Database
+pnpm db:migrate
+pnpm db:seed
+```
+````
+
+````
+
+## Best Practices
+
+### Keep It Concise
+
+- Focus on persistent preferences and conventions
+- Avoid storing temporary or frequently changing information
+- Use clear headings and list structures
+
+### Regular Updates
+
+- Update Agents.md promptly when preferences change
+- Keep it in sync when adding new project conventions
+- Remove outdated or no longer applicable information
+
+### Categorize Organization
+
+- Use level-2 headings (##) for main categories
+- Use list items for specific entries
+- Add dates to mark important decisions
+
+## Integration with Other Features
+
+### Combining with Skills
+
+Global preferences in Agents.md can be combined with project-specific Skills:
+
+- **Agents.md**: User preferences, global conventions
+- **Skills**: Domain-specific best practices, detailed rules
+
+### Combining with Session Context
+
+Memory content is injected into session context as tool results, so:
+
+- Keep memory file size moderate
+- Avoid duplicating information already in the session
+- Use keywords for quick scanning
+
+## Troubleshooting
+
+### Memory Not Being Read
+
+1. Confirm `MEMO_ENABLE_MEMORY_TOOL` is not set to `0`
+2. Check if Agents.md file exists
+3. Verify file path (consider `MEMO_HOME` setting)
+4. Check file permissions
+
+### Memory Content Too Long
+
+If Agents.md content is too long:
+
+1. Remove non-critical information
+2. Move detailed information to project documentation
+3. Use more concise expressions
+4. Split into multiple memory files by project (using different memory_id)
+
+### Memory Not Taking Effect
+
+1. Confirm the memory tool was successfully called
+2. Check if the returned JSON format is correct
+3. Verify Markdown format has no syntax errors
+
+## Example Agents.md
+
+```markdown
+# Agent Memories
+
+## Coding Style
+
+- Language: TypeScript with strict mode
+- Indentation: 2 spaces
+- Quotes: Single quotes for strings
+- Semicolons: Required
+- Trailing commas: ES5 compatible
+
+## Communication
+
+- Prefer concise, technical responses
+- Include code examples when helpful
+- Explain the "why" behind recommendations
+- Ask clarifying questions when requirements are unclear
+
+## Technology Preferences
+
+- Frontend: React with hooks, Next.js for SSR
+- Backend: Node.js, Express or Fastify
+- Database: PostgreSQL preferred
+- Testing: Vitest for unit, Playwright for E2E
+- Package manager: pnpm
+
+## Project: MyApp
+
+- Monorepo structure
+- Uses feature-based folder organization
+- API documentation in /docs/api
+- Environment files: .env.local (gitignored)
+````
+
+## Related
+
+- [Configuration](./configuration.md): Environment variables and configuration options
+- [Skills System](./skills.md): Domain-specific expertise
+- [Built-in Tools](./tools.md): get_memory tool details

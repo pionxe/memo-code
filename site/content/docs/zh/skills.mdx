@@ -1,0 +1,269 @@
+---
+title: 'Skills 系统'
+description: '发现、管理和使用 Skills 来增强 Memo 的领域专业能力。'
+order: 9
+category: 'Extensions'
+---
+
+# Skills 系统
+
+Skills 是 Memo 的扩展机制，允许你为特定领域或任务类型添加专业知识和最佳实践。通过 Skills，Memo 可以在处理特定类型的任务时加载额外的指导和上下文。
+
+## 什么是 Skill
+
+Skill 是一组存储在 `SKILL.md` 文件中的本地指令，包含：
+
+- **名称和描述**：用于识别和匹配 Skill
+- **使用规则**：何时以及如何应用该 Skill
+- **最佳实践**：领域特定的知识和模式
+- **参考资源**：相关的代码示例、模板和文档
+
+### Skill 文件结构
+
+```md
+---
+name: skill-name
+description: 描述这个 Skill 的用途
+metadata:
+    tags: tag1, tag2, tag3
+---
+
+# Skill 名称
+
+## 何时使用
+
+描述在什么场景下应该使用这个 Skill。
+
+## 如何使用
+
+- 链接到规则文件或参考文档
+- 提供代码示例
+- 说明最佳实践
+```
+
+## Skills 发现机制
+
+Memo 在启动时自动扫描以下位置来发现 Skills：
+
+### 项目级 Skills
+
+- `.<agent>/skills` 目录（例如：`.agents/skills`、`.claude/skills`、`.codex/skills`）
+- 扫描深度：最多 6 层子目录
+
+### 用户级 Skills
+
+- `$MEMO_HOME/skills`（默认为 `~/.memo/skills`）
+
+### 排除的目录
+
+- `.git/` 和 `node_modules/`
+- Memo 主目录外的 `~/.xxx/skills` 隐藏目录
+
+## 创建 Skill
+
+### 1. 选择位置
+
+**项目特定 Skill**：放在项目根目录的 `.codex/skills/<skill-name>/SKILL.md`
+
+**全局 Skill**：放在 `~/.memo/skills/<skill-name>/SKILL.md`
+
+### 2. 编写 SKILL.md
+
+```md
+---
+name: react-hooks
+description: Best practices for React Hooks usage and custom hooks creation
+---
+
+# React Hooks Best Practices
+
+## When to use
+
+Use this skill when working with React Hooks, including:
+
+- Built-in hooks (useState, useEffect, useContext, etc.)
+- Custom hooks creation
+- Hooks performance optimization
+
+## Rules
+
+1. **useEffect dependencies**: Always specify the complete dependency array
+2. **Custom hooks naming**: Start with `use` prefix
+3. **Cleanup side effects**: Return cleanup functions in useEffect when needed
+
+## References
+
+- [./rules/useEffect.md](./rules/useEffect.md)
+- [./examples/custom-hook.ts](./examples/custom-hook.ts)
+```
+
+### 3. 添加规则文件（可选）
+
+```md
+<!-- .codex/skills/react-hooks/rules/useEffect.md -->
+
+# useEffect Best Practices
+
+## Dependency Array Rules
+
+- Include all values from the component scope used inside useEffect
+- Use functional updates when current state is needed
+- Consider using useCallback for function dependencies
+
+## Common Pitfalls
+
+- Missing dependencies causing stale closures
+- Infinite loops from object/array dependencies
+- Race conditions in async effects
+```
+
+## 使用 Skills
+
+### 显式调用
+
+在提示中通过 `$skill-name` 语法显式调用：
+
+```
+请帮我优化这个组件的 hooks 使用 $react-hooks
+```
+
+```
+使用最佳实践重构这段代码 $doc-writing
+```
+
+### 自动匹配
+
+当任务描述与某个 Skill 的描述高度匹配时，Memo 会自动建议使用该 Skill。
+
+### 查看可用 Skills
+
+在会话中，Memo 会将所有发现的 Skills 列在系统提示中：
+
+```
+## Skills
+A skill is a set of local instructions to follow that is stored in a SKILL.md file...
+
+### Available skills
+- react-hooks: Best practices for React Hooks usage...
+- doc-writing: Generate and update technical documentation...
+```
+
+## 配置默认激活 Skills
+
+在 `config.toml` 中设置默认激活的 Skills：
+
+```toml
+# 激活所有发现的 Skills（默认）
+# active_skills 未设置时
+
+# 不激活任何 Skill
+active_skills = []
+
+# 指定激活特定的 Skills
+active_skills = [
+  "/absolute/path/to/.codex/skills/react-hooks/SKILL.md",
+  "/absolute/path/to/.memo/skills/doc-writing/SKILL.md"
+]
+```
+
+注意：`active_skills` 存储的是 SKILL.md 文件的**绝对路径**。
+
+## 在 Web UI 中管理 Skills
+
+启动 Web 控制台：
+
+```bash
+memo web --open
+```
+
+在侧边栏的 **Skills** 页面可以：
+
+- 查看所有已发现的 Skills
+- 创建新的 Skill（自动生成目录结构和模板）
+- 删除 Skill
+- 切换激活状态
+- 查看 Skill 详情
+
+Skills 的激活状态变更会自动保存到 `config.toml` 中。
+
+## Skills 使用规则
+
+Memo 内置以下 Skills 使用规则：
+
+1. **触发规则**：
+    - 用户明确命名 Skill（使用 `$SkillName` 或纯文本）
+    - 任务描述与某个 Skill 的描述明显匹配
+    - 多个提及意味着全部使用
+
+2. **使用方法**（渐进式披露）：
+    - 首先读取 SKILL.md 了解工作流程
+    - 当 SKILL.md 引用相对路径时，优先相对于 Skill 目录解析
+    - 如果存在 `scripts/` 目录，优先运行或修补脚本
+    - 如果存在 `assets/` 或模板，优先复用而非从头创建
+
+3. **上下文管理**：
+    - 保持上下文精简：总结长段落而不是粘贴全部
+    - 仅在需要时加载额外文件
+    - 避免深度引用追踪
+
+4. **安全与回退**：
+    - 如果 Skill 无法干净地应用，说明问题并选择次优方案继续
+
+## 实用技巧
+
+### 组织复杂的 Skills
+
+```
+.skills/
+└── my-skill/
+    ├── SKILL.md              # 主入口
+    ├── rules/                # 规则文档
+    │   ├── rule1.md
+    │   └── rule2.md
+    ├── examples/             # 代码示例
+    │   ├── example1.ts
+    │   └── example2.ts
+    ├── scripts/              # 可执行脚本
+    │   └── helper.js
+    └── assets/               # 模板和资源
+        └── template.tsx
+```
+
+### Skill 命名建议
+
+- 使用小写字母和连字符（kebab-case）
+- 名称应清晰描述领域或用途
+- 避免与内置工具名称冲突
+- 长度限制：64 个字符
+
+### 描述编写建议
+
+- 简洁说明 Skill 的用途
+- 包含关键词以便自动匹配
+- 长度限制：1024 个字符
+
+## 故障排除
+
+### Skill 未被识别
+
+1. 确认 SKILL.md 存在且文件名为大写
+2. 检查 frontmatter 是否包含 `name` 和 `description`
+3. 验证 Skill 目录在扫描路径内
+4. 重启 Memo 或创建新会话
+
+### Skill 内容过长
+
+- 将详细内容拆分到 rules/ 子目录
+- 在 SKILL.md 中只保留概述和链接
+- 使用渐进式披露，按需加载具体内容
+
+### Skill 未生效
+
+1. 检查 `config.toml` 中的 `active_skills` 配置
+2. 在 Web UI 中确认 Skill 处于激活状态
+3. 确保在提示中正确使用了 `$skill-name` 语法
+
+## 相关
+
+- [MCP 集成](./mcp.md)：外部工具集成
+- [配置](./configuration.md)：config.toml 详解

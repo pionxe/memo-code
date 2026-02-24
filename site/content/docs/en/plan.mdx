@@ -1,0 +1,283 @@
+---
+title: 'Task Planning'
+description: 'Use the update_plan tool to manage structured progress for complex tasks.'
+order: 11
+category: 'Core Features'
+---
+
+# Task Planning
+
+Memo's task planning system helps you manage the execution progress of complex tasks through structured step tracking and status management.
+
+## Overview
+
+The `update_plan` tool allows you to:
+
+- Break down complex tasks into manageable steps
+- Track the status of each step (pending/in_progress/completed)
+- Maintain context and explanations for the current task
+- Ensure only one step is in progress at a time
+
+## Tool Details
+
+**Tool Name**: `update_plan`
+
+**Description**: Updates the task plan. At most one step can be in_progress at a time.
+
+**Parameters**:
+
+| Parameter     | Type   | Required | Description                                             |
+| ------------- | ------ | -------- | ------------------------------------------------------- |
+| `explanation` | string | No       | Context text for current plan revision                  |
+| `plan`        | array  | Yes      | List of plan items, each containing `step` and `status` |
+
+**Plan Item Structure**:
+
+```typescript
+{
+    step: string // Step description
+    status: 'pending' | 'in_progress' | 'completed'
+}
+```
+
+## Use Cases
+
+### 1. Complex Feature Development
+
+Break a feature into multiple steps:
+
+```json
+{
+    "explanation": "Starting implementation of user authentication",
+    "plan": [
+        { "step": "Design database schema", "status": "completed" },
+        { "step": "Implement user registration API", "status": "in_progress" },
+        { "step": "Implement user login API", "status": "pending" },
+        { "step": "Add password encryption", "status": "pending" },
+        { "step": "Write unit tests", "status": "pending" }
+    ]
+}
+```
+
+### 2. Code Refactoring
+
+Plan the execution order of a large refactoring task:
+
+```json
+{
+    "explanation": "Refactoring component library to use new design system",
+    "plan": [
+        { "step": "Analyze existing component dependencies", "status": "completed" },
+        { "step": "Update Button component", "status": "in_progress" },
+        { "step": "Update Input component", "status": "pending" },
+        { "step": "Update Card component", "status": "pending" },
+        { "step": "Update documentation and examples", "status": "pending" },
+        { "step": "Run regression tests", "status": "pending" }
+    ]
+}
+```
+
+### 3. Multi-file Editing
+
+Track changes involving multiple files:
+
+```json
+{
+    "explanation": "Adding new API endpoints",
+    "plan": [
+        { "step": "Update route configuration", "status": "completed" },
+        { "step": "Implement controller logic", "status": "completed" },
+        { "step": "Add service layer methods", "status": "in_progress" },
+        { "step": "Update type definitions", "status": "pending" },
+        { "step": "Add integration tests", "status": "pending" }
+    ]
+}
+```
+
+## Status Transitions
+
+```
+pending -> in_progress -> completed
+```
+
+**Rules**:
+
+- At most one step can be `in_progress` at any time
+- Steps can skip states (e.g., directly from pending to completed)
+- States can be rolled back (e.g., from completed to in_progress)
+
+## Validation Rules
+
+### Single In-Progress Limit
+
+If you attempt to set multiple steps to `in_progress`:
+
+```
+At most one step can be in_progress at a time
+```
+
+### Simple Task Hint
+
+If the plan has fewer than 4 steps:
+
+```html
+<system_hint tool="update_plan" reason="simple_task">
+    Task "xxx" is simple (2 steps) - execute directly without update_plan.
+</system_hint>
+```
+
+This indicates the current task is simple enough to execute directly without creating a plan.
+
+## Return Value
+
+On successful update:
+
+```json
+{
+    "message": "Plan updated",
+    "explanation": "Starting implementation of user authentication",
+    "plan": [
+        { "step": "Design database schema", "status": "completed" },
+        { "step": "Implement user registration API", "status": "in_progress" },
+        { "step": "Implement user login API", "status": "pending" },
+        { "step": "Add password encryption", "status": "pending" },
+        { "step": "Write unit tests", "status": "pending" }
+    ]
+}
+```
+
+## Best Practices
+
+### Step Design
+
+- **Concrete and actionable**: Each step should be a clearly defined, completable task
+- **Appropriate granularity**: Neither too macro nor too trivial
+- **Logical order**: Arrange steps based on dependencies
+
+### Writing Explanations
+
+- Use `explanation` to explain the reason for the current status change
+- Describe problems encountered or decisions made
+- Note items requiring user attention
+
+### Examples
+
+Good steps:
+
+- ✅ "Implement user registration API endpoint"
+- ✅ "Add password hash verification function"
+- ✅ "Update user model validation rules"
+
+Poor steps:
+
+- ❌ "Do backend" (too vague)
+- ❌ "Add code on line 15" (too specific)
+- ❌ "Fix all bugs" (not measurable)
+
+## Workflow Example
+
+### 1. Initialize Plan
+
+```
+User: Help me implement a complete user authentication system
+
+Memo: Let me plan the execution steps for this task.
+
+update_plan: {
+  "explanation": "Planning user authentication system implementation",
+  "plan": [
+    { "step": "Design database schema", "status": "pending" },
+    { "step": "Implement user registration API", "status": "pending" },
+    { "step": "Implement user login API", "status": "pending" },
+    { "step": "Add JWT token generation", "status": "pending" },
+    { "step": "Implement password reset", "status": "pending" },
+    { "step": "Write unit tests", "status": "pending" }
+  ]
+}
+```
+
+### 2. Start First Step
+
+```
+update_plan: {
+  "explanation": "Starting database schema design",
+  "plan": [
+    { "step": "Design database schema", "status": "in_progress" },
+    { "step": "Implement user registration API", "status": "pending" },
+    ...
+  ]
+}
+```
+
+### 3. Complete and Move to Next
+
+```
+update_plan: {
+  "explanation": "Database schema design completed, starting registration API",
+  "plan": [
+    { "step": "Design database schema", "status": "completed" },
+    { "step": "Implement user registration API", "status": "in_progress" },
+    { "step": "Implement user login API", "status": "pending" },
+    ...
+  ]
+}
+```
+
+### 4. Task Complete
+
+```
+update_plan: {
+  "explanation": "All steps completed, user authentication system implementation done",
+  "plan": [
+    { "step": "Design database schema", "status": "completed" },
+    { "step": "Implement user registration API", "status": "completed" },
+    { "step": "Implement user login API", "status": "completed" },
+    { "step": "Add JWT token generation", "status": "completed" },
+    { "step": "Implement password reset", "status": "completed" },
+    { "step": "Write unit tests", "status": "completed" }
+  ]
+}
+```
+
+## Combining with Subagents
+
+Using plans in subagent scenarios:
+
+1. Main agent creates overall plan
+2. Assign subtasks to subagents
+3. Subagents can have their own sub-plans
+4. Synchronize progress via `wait` tool
+
+## Notes
+
+- **Non-persistent**: Plan state is stored in memory and will be lost when session ends
+- **Session-specific**: Each session maintains its own plan state
+- **Automatic suggestion**: Memo automatically suggests using plans to manage complex tasks
+
+## Troubleshooting
+
+### "At most one step can be in_progress"
+
+Ensure only one step is marked as in progress at a time:
+
+```json
+{
+    "plan": [
+        { "step": "Step A", "status": "completed" },
+        { "step": "Step B", "status": "in_progress" }, // ✅ Only one in progress
+        { "step": "Step C", "status": "pending" }
+    ]
+}
+```
+
+### Simple Task Hint
+
+For tasks with fewer than 4 steps, the system suggests executing directly. If you need to use a plan:
+
+- Add more detailed sub-steps
+- Or ignore the hint and execute directly
+
+## Related
+
+- [Built-in Tools](./tools.md): update_plan tool details
+- [Subagents](./subagent.md): Using plans with subagents

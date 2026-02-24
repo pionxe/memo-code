@@ -17,6 +17,11 @@
   <a href="README.zh.md">中文文档</a>
 </p>
 
+<p align="center">
+  🌐 <strong>Website</strong>: <a href="https://memo.mcell.top/">https://memo.mcell.top/</a><br>
+  📚 <strong>Documentation</strong>: <a href="https://memo.mcell.top/zh/docs/getting-started/">https://memo.mcell.top/zh/docs/getting-started/</a>
+</p>
+
 <img src="public/demo.png" width="100%" alt="Memo Code demo">
 
 ---

@@ -1,0 +1,298 @@
+---
+title: '记忆系统'
+description: '使用持久化记忆来存储用户偏好和项目上下文。'
+order: 10
+category: 'Core Features'
+---
+
+# 记忆系统
+
+Memo 的记忆系统允许你存储持久的用户偏好、项目上下文和重要信息，在会话之间保持一致性。
+
+## 概述
+
+记忆系统通过 `get_memory` 工具实现，它从本地 `Agents.md` 文件中读取存储的信息。这允许：
+
+- 跨会话保持用户偏好
+- 存储项目特定的上下文和约定
+- 记录重要的决策和模式
+
+## 记忆文件位置
+
+默认位置：
+
+```
+~/.memo/Agents.md
+```
+
+当设置了 `MEMO_HOME` 环境变量时：
+
+```
+$MEMO_HOME/Agents.md
+```
+
+## 启用记忆工具
+
+记忆工具默认启用。你可以通过环境变量控制：
+
+```bash
+# 禁用记忆工具
+export MEMO_ENABLE_MEMORY_TOOL=0
+```
+
+## Agents.md 格式
+
+Agents.md 是一个 Markdown 文件，可以包含任何结构化的信息。Memo 会将整个文件内容作为记忆返回。
+
+### 基本结构
+
+```markdown
+# Agent Memories
+
+## User Preferences
+
+- Output style: Concise and technical
+- Preferred language: TypeScript
+- Code style: 2-space indentation, single quotes
+
+## Project Context
+
+- Main framework: React + Next.js
+- Testing framework: Vitest
+- State management: Zustand
+
+## Important Decisions
+
+- 2024-01-15: Migrated from Redux to Zustand
+- 2024-02-01: Adopted pnpm for package management
+```
+
+### 建议的组织方式
+
+按类别组织记忆：
+
+```markdown
+# Agent Memories
+
+## Personal Preferences
+
+- Communication style
+- Code review preferences
+- Documentation standards
+
+## Technology Stack
+
+- Primary languages and frameworks
+- Preferred tools and libraries
+- Build and deployment preferences
+
+## Project Conventions
+
+- Naming conventions
+- Directory structure
+- Git workflow
+
+## Important Notes
+
+- Known issues and workarounds
+- Security considerations
+- Performance guidelines
+```
+
+## 在会话中使用记忆
+
+### 自动访问
+
+当启用记忆工具时，Memo 可以根据需要调用 `get_memory` 来获取存储的信息。
+
+### 工具详情
+
+**工具名称**：`get_memory`
+
+**参数**：
+
+- `memory_id` (string, required): 调用的记忆标识符
+
+**返回值**：
+
+```json
+{
+    "memory_id": "thread-1",
+    "memory_summary": "## Agent Memories\n\n- User prefers concise output..."
+}
+```
+
+**错误处理**：
+
+如果 Agents.md 文件不存在或无法读取：
+
+```json
+"memory not found for memory_id=thread-1"
+```
+
+## 使用场景
+
+### 1. 用户偏好
+
+记录你的编码和沟通偏好：
+
+```markdown
+## User Preferences
+
+- Prefer functional programming patterns
+- Like detailed comments for complex logic
+- Want to see multiple solution options when applicable
+- Prefer async/await over promises
+```
+
+### 2. 项目约定
+
+存储项目特定的约定和模式：
+
+```markdown
+## Project Conventions
+
+- Use named exports instead of default exports
+- Place tests next to source files (co-location)
+- Use CSS modules for styling
+- Follow conventional commits for git messages
+```
+
+### 3. 架构决策
+
+记录重要的架构决策和原因：
+
+```markdown
+## Architecture Decisions
+
+- Monorepo structure using pnpm workspaces
+- API layer uses tRPC for type safety
+- Database: PostgreSQL with Prisma ORM
+- Caching: Redis for session storage
+```
+
+### 4. 常用命令
+
+存储项目常用的命令：
+
+````markdown
+## Common Commands
+
+```bash
+# Development
+pnpm dev
+
+# Testing
+pnpm test
+pnpm test:watch
+
+# Database
+pnpm db:migrate
+pnpm db:seed
+```
+````
+
+````
+
+## 最佳实践
+
+### 保持简洁
+
+- 专注于持久化的偏好和约定
+- 避免存储临时性或频繁变化的信息
+- 使用清晰的标题和列表结构
+
+### 定期更新
+
+- 当偏好变化时及时更新 Agents.md
+- 添加新的项目约定时同步更新
+- 移除过时或不再适用的信息
+
+### 分类组织
+
+- 使用二级标题（##）划分主要类别
+- 使用列表项记录具体条目
+- 添加日期标记重要的决策
+
+## 与其他功能的配合
+
+### 与 Skills 结合
+
+Agents.md 中的全局偏好可以与项目特定的 Skills 结合：
+
+- **Agents.md**：用户偏好、全局约定
+- **Skills**：领域特定的最佳实践、详细规则
+
+### 与会话上下文结合
+
+记忆内容会作为工具结果被注入到会话上下文中，因此：
+
+- 保持记忆文件大小适中
+- 避免重复存储会话中已有的信息
+- 使用关键词便于快速扫描
+
+## 故障排除
+
+### 记忆未被读取
+
+1. 确认 `MEMO_ENABLE_MEMORY_TOOL` 未设置为 `0`
+2. 检查 Agents.md 文件是否存在
+3. 验证文件路径（考虑 `MEMO_HOME` 设置）
+4. 检查文件权限
+
+### 记忆内容过长
+
+如果 Agents.md 内容过长：
+
+1. 移除非关键信息
+2. 将详细信息移到项目文档
+3. 使用更简洁的表达
+4. 按项目拆分多个记忆文件（使用不同 memory_id）
+
+### 记忆未生效
+
+1. 确认记忆工具被成功调用
+2. 检查返回的 JSON 格式是否正确
+3. 验证 Markdown 格式没有语法错误
+
+## 示例 Agents.md
+
+```markdown
+# Agent Memories
+
+## Coding Style
+
+- Language: TypeScript with strict mode
+- Indentation: 2 spaces
+- Quotes: Single quotes for strings
+- Semicolons: Required
+- Trailing commas: ES5 compatible
+
+## Communication
+
+- Prefer concise, technical responses
+- Include code examples when helpful
+- Explain the "why" behind recommendations
+- Ask clarifying questions when requirements are unclear
+
+## Technology Preferences
+
+- Frontend: React with hooks, Next.js for SSR
+- Backend: Node.js, Express or Fastify
+- Database: PostgreSQL preferred
+- Testing: Vitest for unit, Playwright for E2E
+- Package manager: pnpm
+
+## Project: MyApp
+
+- Monorepo structure
+- Uses feature-based folder organization
+- API documentation in /docs/api
+- Environment files: .env.local (gitignored)
+````
+
+## 相关
+
+- [配置](./configuration.md)：环境变量和配置选项
+- [Skills 系统](./skills.md)：领域特定的专业知识
+- [内置工具](./tools.md)：get_memory 工具详情

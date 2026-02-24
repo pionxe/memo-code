@@ -12,19 +12,41 @@ This documentation reflects the current behavior of Memo CLI and focuses on prac
 6. [Multi-Agent (Subagent)](./subagent.md)
 7. [Web Console](./web-console.md)
 8. [MCP Integration](./mcp.md)
-9. [Sessions & History](./sessions-history.md)
-10. [Troubleshooting](./troubleshooting.md)
+9. [Skills System](./skills.md)
+10. [Memory System](./memory.md)
+11. [Task Planning](./plan.md)
+12. [Agent Persona & Project Guide](./soul.md)
+13. [Sessions & History](./sessions-history.md)
+14. [Troubleshooting](./troubleshooting.md)
 
 ## Documentation Index
+
+### Getting Started
 
 - [Getting Started](./getting-started.md): install, API key, first run.
 - [CLI & TUI Guide](./cli-tui.md): interaction model, slash commands, shortcuts, plain mode.
 - [Configuration](./configuration.md): `config.toml`, providers, MCP, environment variables.
+
+### Core Features
+
 - [Built-in Tools](./tools.md): available tools, default toolset, feature switches.
 - [Safety & Approvals](./approval-safety.md): approval model, `--dangerous`, plain-mode behavior.
 - [Multi-Agent (Subagent)](./subagent.md): parallel task execution and lifecycle.
-- [Web Console](./web-console.md): browser UI, login config, and sidebar management flows.
+- [Task Planning](./plan.md): using update_plan to manage complex task progress.
+
+### Extensions & Integration
+
 - [MCP Integration](./mcp.md): how to add/manage MCP servers.
+- [Skills System](./skills.md): discover, manage, and use Skills to extend domain capabilities.
+
+### Personalization & Context
+
+- [Agent Persona & Project Guide](./soul.md): configure behavior using SOUL.md and AGENTS.md.
+- [Memory System](./memory.md): persistent user preferences and project context.
+
+### Operations
+
+- [Web Console](./web-console.md): browser UI, login config, and sidebar management flows.
 - [Sessions & History](./sessions-history.md): JSONL logs, resume behavior, cleanup.
 - [Troubleshooting](./troubleshooting.md): common issues and direct fixes.
 
@@ -33,3 +55,8 @@ This documentation reflects the current behavior of Memo CLI and focuses on prac
 - These pages are user-facing and intentionally avoid deep implementation internals.
 - Behavior described here is based on the current code in this repository.
 - Current terminal runtime is consolidated in `packages/tui` (`src/cli.tsx` + interactive UI modules).
+
+## Related Links
+
+- 🌐 **Website**: https://memo.mcell.top/
+- 📚 **Full Documentation**: https://memo.mcell.top/zh/docs/getting-started/

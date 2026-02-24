@@ -1,0 +1,283 @@
+---
+title: '任务计划'
+description: '使用 update_plan 工具管理复杂任务的结构化进度。'
+order: 11
+category: 'Core Features'
+---
+
+# 任务计划
+
+Memo 的任务计划系统帮助你管理复杂任务的执行进度，通过结构化的步骤追踪和状态管理。
+
+## 概述
+
+`update_plan` 工具允许：
+
+- 将复杂任务分解为可管理的步骤
+- 追踪每个步骤的状态（待处理/进行中/已完成）
+- 维护当前任务的上下文和解释
+- 确保一次只有一个步骤处于进行中状态
+
+## 工具详情
+
+**工具名称**：`update_plan`
+
+**描述**：更新任务计划。一次最多只能有一个步骤处于进行中状态。
+
+**参数**：
+
+| 参数          | 类型   | 必需 | 描述                                      |
+| ------------- | ------ | ---- | ----------------------------------------- |
+| `explanation` | string | 否   | 当前计划修订的上下文说明                  |
+| `plan`        | array  | 是   | 计划项目列表，每项包含 `step` 和 `status` |
+
+**计划项目结构**：
+
+```typescript
+{
+    step: string // 步骤描述
+    status: 'pending' | 'in_progress' | 'completed'
+}
+```
+
+## 使用场景
+
+### 1. 复杂功能开发
+
+将一个功能开发分解为多个步骤：
+
+```json
+{
+    "explanation": "开始实现用户认证功能",
+    "plan": [
+        { "step": "设计数据库 schema", "status": "completed" },
+        { "step": "实现用户注册 API", "status": "in_progress" },
+        { "step": "实现用户登录 API", "status": "pending" },
+        { "step": "添加密码加密", "status": "pending" },
+        { "step": "编写单元测试", "status": "pending" }
+    ]
+}
+```
+
+### 2. 代码重构
+
+规划大型重构任务的执行顺序：
+
+```json
+{
+    "explanation": "重构组件库以使用新的设计系统",
+    "plan": [
+        { "step": "分析现有组件依赖", "status": "completed" },
+        { "step": "更新 Button 组件", "status": "in_progress" },
+        { "step": "更新 Input 组件", "status": "pending" },
+        { "step": "更新 Card 组件", "status": "pending" },
+        { "step": "更新文档和示例", "status": "pending" },
+        { "step": "运行回归测试", "status": "pending" }
+    ]
+}
+```
+
+### 3. 多文件编辑
+
+追踪涉及多个文件的更改：
+
+```json
+{
+    "explanation": "添加新的 API 端点",
+    "plan": [
+        { "step": "更新路由配置", "status": "completed" },
+        { "step": "实现控制器逻辑", "status": "completed" },
+        { "step": "添加服务层方法", "status": "in_progress" },
+        { "step": "更新类型定义", "status": "pending" },
+        { "step": "添加集成测试", "status": "pending" }
+    ]
+}
+```
+
+## 状态流转
+
+```
+pending -> in_progress -> completed
+```
+
+**规则**：
+
+- 同一时间最多只能有一个步骤处于 `in_progress` 状态
+- 步骤可以跳过某些状态（例如直接从 pending 到 completed）
+- 可以回退状态（例如从 completed 回到 in_progress）
+
+## 验证规则
+
+### 单步进行限制
+
+如果尝试设置多个步骤为 `in_progress`：
+
+```
+At most one step can be in_progress at a time
+```
+
+### 简单任务提示
+
+如果计划步骤少于 4 个：
+
+```html
+<system_hint tool="update_plan" reason="simple_task">
+    Task "xxx" is simple (2 steps) - execute directly without update_plan.
+</system_hint>
+```
+
+这表明当前任务较简单，可以直接执行而不需要创建计划。
+
+## 返回值
+
+成功更新时：
+
+```json
+{
+    "message": "Plan updated",
+    "explanation": "开始实现用户认证功能",
+    "plan": [
+        { "step": "设计数据库 schema", "status": "completed" },
+        { "step": "实现用户注册 API", "status": "in_progress" },
+        { "step": "实现用户登录 API", "status": "pending" },
+        { "step": "添加密码加密", "status": "pending" },
+        { "step": "编写单元测试", "status": "pending" }
+    ]
+}
+```
+
+## 最佳实践
+
+### 步骤设计
+
+- **具体且可执行**：每个步骤应该是明确、可完成的任务
+- **适当的粒度**：既不要太宏观也不要太琐碎
+- **逻辑顺序**：按依赖关系排列步骤
+
+### 说明编写
+
+- 使用 `explanation` 解释当前状态变更的原因
+- 说明遇到的问题或决策
+- 记录需要用户注意的事项
+
+### 示例
+
+好的步骤：
+
+- ✅ "实现用户注册 API 端点"
+- ✅ "添加密码哈希验证函数"
+- ✅ "更新用户模型的验证规则"
+
+不好的步骤：
+
+- ❌ "做后端"（太模糊）
+- ❌ "添加第 15 行代码"（太具体）
+- ❌ "修复所有 bug"（不可衡量）
+
+## 工作流程示例
+
+### 1. 初始化计划
+
+```
+用户：帮我实现一个完整的用户认证系统
+
+Memo：我来为你规划这个任务的执行步骤。
+
+update_plan: {
+  "explanation": "规划用户认证系统的实现",
+  "plan": [
+    { "step": "设计数据库 schema", "status": "pending" },
+    { "step": "实现用户注册 API", "status": "pending" },
+    { "step": "实现用户登录 API", "status": "pending" },
+    { "step": "添加 JWT 令牌生成", "status": "pending" },
+    { "step": "实现密码重置功能", "status": "pending" },
+    { "step": "编写单元测试", "status": "pending" }
+  ]
+}
+```
+
+### 2. 开始第一步
+
+```
+update_plan: {
+  "explanation": "开始设计数据库 schema",
+  "plan": [
+    { "step": "设计数据库 schema", "status": "in_progress" },
+    { "step": "实现用户注册 API", "status": "pending" },
+    ...
+  ]
+}
+```
+
+### 3. 完成并进入下一步
+
+```
+update_plan: {
+  "explanation": "数据库 schema 设计完成，开始实现注册 API",
+  "plan": [
+    { "step": "设计数据库 schema", "status": "completed" },
+    { "step": "实现用户注册 API", "status": "in_progress" },
+    { "step": "实现用户登录 API", "status": "pending" },
+    ...
+  ]
+}
+```
+
+### 4. 任务完成
+
+```
+update_plan: {
+  "explanation": "所有步骤已完成，用户认证系统实现完毕",
+  "plan": [
+    { "step": "设计数据库 schema", "status": "completed" },
+    { "step": "实现用户注册 API", "status": "completed" },
+    { "step": "实现用户登录 API", "status": "completed" },
+    { "step": "添加 JWT 令牌生成", "status": "completed" },
+    { "step": "实现密码重置功能", "status": "completed" },
+    { "step": "编写单元测试", "status": "completed" }
+  ]
+}
+```
+
+## 与子代理结合
+
+在子代理场景中使用计划：
+
+1. 主代理创建整体计划
+2. 将子任务分配给子代理
+3. 子代理可以有自己的子计划
+4. 通过 `wait` 工具同步进度
+
+## 注意事项
+
+- **非持久化**：计划状态存储在内存中，会话结束会丢失
+- **会话特定**：每个会话维护自己的计划状态
+- **自动建议**：Memo 会自动建议使用计划来管理复杂任务
+
+## 故障排除
+
+### "At most one step can be in_progress"
+
+确保一次只将一个步骤标记为进行中：
+
+```json
+{
+    "plan": [
+        { "step": "步骤 A", "status": "completed" },
+        { "step": "步骤 B", "status": "in_progress" }, // ✅ 只有一个进行中
+        { "step": "步骤 C", "status": "pending" }
+    ]
+}
+```
+
+### 简单任务提示
+
+对于少于 4 个步骤的任务，系统会建议直接执行。如果需要使用计划：
+
+- 添加更多详细的子步骤
+- 或者忽略提示直接执行
+
+## 相关
+
+- [内置工具](./tools.md)：update_plan 工具详情
+- [子代理](./subagent.md)：在子代理中使用计划

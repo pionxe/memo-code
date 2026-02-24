@@ -1,0 +1,269 @@
+---
+title: 'Skills System'
+description: 'Discover, manage, and use Skills to enhance Memo\'s domain-specific expertise.'
+order: 9
+category: 'Extensions'
+---
+
+# Skills System
+
+Skills are Memo's extension mechanism that allows you to add expertise and best practices for specific domains or task types. Through Skills, Memo can load additional guidance and context when handling specific types of tasks.
+
+## What is a Skill
+
+A Skill is a set of local instructions stored in a `SKILL.md` file, containing:
+
+- **Name and Description**: For identifying and matching Skills
+- **Usage Rules**: When and how to apply the Skill
+- **Best Practices**: Domain-specific knowledge and patterns
+- **Reference Resources**: Related code examples, templates, and documentation
+
+### Skill File Structure
+
+```md
+---
+name: skill-name
+description: Describe what this Skill is for
+metadata:
+    tags: tag1, tag2, tag3
+---
+
+# Skill Name
+
+## When to use
+
+Describe in what scenarios this Skill should be used.
+
+## How to use
+
+- Link to rule files or reference documentation
+- Provide code examples
+- Explain best practices
+```
+
+## Skills Discovery
+
+Memo automatically scans the following locations at startup to discover Skills:
+
+### Project-level Skills
+
+- `.<agent>/skills` directories (e.g., `.agents/skills`, `.claude/skills`, `.codex/skills`)
+- Scan depth: up to 6 subdirectory levels
+
+### User-level Skills
+
+- `$MEMO_HOME/skills` (default: `~/.memo/skills`)
+
+### Excluded Directories
+
+- `.git/` and `node_modules/`
+- `~/.xxx/skills` hidden directories outside Memo home
+
+## Creating a Skill
+
+### 1. Choose Location
+
+**Project-specific Skill**: Place in `.codex/skills/<skill-name>/SKILL.md` at project root
+
+**Global Skill**: Place in `~/.memo/skills/<skill-name>/SKILL.md`
+
+### 2. Write SKILL.md
+
+```md
+---
+name: react-hooks
+description: Best practices for React Hooks usage and custom hooks creation
+---
+
+# React Hooks Best Practices
+
+## When to use
+
+Use this skill when working with React Hooks, including:
+
+- Built-in hooks (useState, useEffect, useContext, etc.)
+- Custom hooks creation
+- Hooks performance optimization
+
+## Rules
+
+1. **useEffect dependencies**: Always specify the complete dependency array
+2. **Custom hooks naming**: Start with `use` prefix
+3. **Cleanup side effects**: Return cleanup functions in useEffect when needed
+
+## References
+
+- [./rules/useEffect.md](./rules/useEffect.md)
+- [./examples/custom-hook.ts](./examples/custom-hook.ts)
+```
+
+### 3. Add Rule Files (Optional)
+
+```md
+<!-- .codex/skills/react-hooks/rules/useEffect.md -->
+
+# useEffect Best Practices
+
+## Dependency Array Rules
+
+- Include all values from the component scope used inside useEffect
+- Use functional updates when current state is needed
+- Consider using useCallback for function dependencies
+
+## Common Pitfalls
+
+- Missing dependencies causing stale closures
+- Infinite loops from object/array dependencies
+- Race conditions in async effects
+```
+
+## Using Skills
+
+### Explicit Invocation
+
+Explicitly invoke a Skill using the `$skill-name` syntax in prompts:
+
+```
+Help me optimize the hooks usage in this component $react-hooks
+```
+
+```
+Refactor this code using best practices $doc-writing
+```
+
+### Auto-matching
+
+When a task description closely matches a Skill's description, Memo will automatically suggest using that Skill.
+
+### View Available Skills
+
+In a session, Memo lists all discovered Skills in the system prompt:
+
+```
+## Skills
+A skill is a set of local instructions to follow that is stored in a SKILL.md file...
+
+### Available skills
+- react-hooks: Best practices for React Hooks usage...
+- doc-writing: Generate and update technical documentation...
+```
+
+## Configuring Default Active Skills
+
+Set default active Skills in `config.toml`:
+
+```toml
+# Activate all discovered Skills (default)
+# when active_skills is not set
+
+# No Skills active
+active_skills = []
+
+# Specify specific Skills to activate
+active_skills = [
+  "/absolute/path/to/.codex/skills/react-hooks/SKILL.md",
+  "/absolute/path/to/.memo/skills/doc-writing/SKILL.md"
+]
+```
+
+Note: `active_skills` stores **absolute paths** to SKILL.md files.
+
+## Managing Skills in Web UI
+
+Start the Web Console:
+
+```bash
+memo web --open
+```
+
+In the **Skills** page in the sidebar, you can:
+
+- View all discovered Skills
+- Create new Skills (auto-generates directory structure and template)
+- Delete Skills
+- Toggle activation status
+- View Skill details
+
+Skill activation state changes are automatically saved to `config.toml`.
+
+## Skills Usage Rules
+
+Memo has built-in rules for using Skills:
+
+1. **Trigger Rules**:
+    - User explicitly names a Skill (using `$SkillName` or plain text)
+    - Task description clearly matches a Skill's description
+    - Multiple mentions mean use all of them
+
+2. **How to Use** (Progressive Disclosure):
+    - First read SKILL.md to understand the workflow
+    - When SKILL.md references relative paths, resolve them relative to the Skill directory first
+    - If `scripts/` directory exists, prefer running or patching scripts
+    - If `assets/` or templates exist, prefer reusing over recreating from scratch
+
+3. **Context Management**:
+    - Keep context small: summarize long sections instead of pasting everything
+    - Only load extra files when needed
+    - Avoid deep reference chasing
+
+4. **Safety and Fallback**:
+    - If a Skill can't be applied cleanly, state the issue and pick the next-best approach
+
+## Practical Tips
+
+### Organizing Complex Skills
+
+```
+.skills/
+└── my-skill/
+    ├── SKILL.md              # Main entry
+    ├── rules/                # Rule documents
+    │   ├── rule1.md
+    │   └── rule2.md
+    ├── examples/             # Code examples
+    │   ├── example1.ts
+    │   └── example2.ts
+    ├── scripts/              # Executable scripts
+    │   └── helper.js
+    └── assets/               # Templates and resources
+        └── template.tsx
+```
+
+### Skill Naming Suggestions
+
+- Use lowercase letters and hyphens (kebab-case)
+- Name should clearly describe the domain or purpose
+- Avoid conflicts with built-in tool names
+- Length limit: 64 characters
+
+### Description Writing Suggestions
+
+- Concisely explain the Skill's purpose
+- Include keywords for auto-matching
+- Length limit: 1024 characters
+
+## Troubleshooting
+
+### Skill Not Recognized
+
+1. Confirm SKILL.md exists with correct filename (uppercase)
+2. Check if frontmatter contains `name` and `description`
+3. Verify Skill directory is within scan paths
+4. Restart Memo or create a new session
+
+### Skill Content Too Long
+
+- Split detailed content into rules/ subdirectory
+- Only keep overview and links in SKILL.md
+- Use progressive disclosure, load specific content on demand
+
+### Skill Not Taking Effect
+
+1. Check `active_skills` configuration in `config.toml`
+2. Confirm Skill is activated in Web UI
+3. Ensure correct `$skill-name` syntax is used in prompt
+
+## Related
+
+- [MCP Integration](./mcp.md): External tool integration
+- [Configuration](./configuration.md): config.toml details
