@@ -14,292 +14,149 @@
   <a href="https://www.npmjs.com/package/@memo-code/memo">
     <img src="https://img.shields.io/npm/v/%40memo-code%2Fmemo" alt="npm version">
   </a>
+  <a href="README.md">English</a>
 </p>
 
 <img src="public/demo.png" width="100%" alt="Memo Code 演示图">
 
-基于 Node.js + TypeScript，兼容 OpenAI API 格式。
+## 🌱 起源
 
-Memo Code 是一个开源的终端编码代理，能够理解项目上下文，并通过自然语言协助你更快完成编码、排障和日常开发任务。
+Memo 诞生于一个简单的想法：**我想验证一个最简单的 Agent 是什么样子**。
 
-## 快速开始
+25年下半年，我在写下技术博客 [Agent = LLM + TOOL](https://stack.mcell.top/blog/2025/26_agent_is_llm_plus_tools) 时，开始思考 Agent 的本质——无非是 LLM + Tool 的循环。但当我真正开始实现时，发现每一个看似简单的功能背后都有大量的工程细节需要处理：
+
+- 系统提示词的最佳实践
+- 工具的设计与安全边界
+- 多模型切换与兼容性
+- 上下文管理（尤其是长会话的压缩策略）
+- TUI 难以处理的交互
+- Web 版本的多工作区支持
+- npm 包的分发与热更新
+- ...
+
+这个项目从一个小 demo 逐渐成长为我现在日常开发中离不开的"效能助手"——它帮我更新文档、管理 GitHub Issues、排查项目问题..., 而我依然使用 Claude Code、Codex CLI 作为主力开发工具，Memo 则是那个默默在后台帮我处理琐事的伙伴。
+
+> 这是一个**个人从 0 构建**的项目，所有架构设计、技术决策都是独立的探索与权衡。如果你对 Agent 的工程实现感兴趣，我希望 Memo 能给你一些参考。
+
+## ✨ 核心特性
+
+| 特性                | 说明                                                                    |
+| ------------------- | ----------------------------------------------------------------------- |
+| **终端 + Web 双端** | 终端 TUI 交互流畅，Web Console 支持多工作区、并发实时会话（最高 20 个） |
+| **智能上下文管理**  | 自动压缩长会话上下文，支持配置压缩阈值，毫秒级 token 估算               |
+| **Skills 技能系统** | Skills 技能集成，自动发现 `SKILL.md`，支持按场景激活                    |
+| **MCP 深度集成**    | 支持本地/远程 MCP 服务器，OAuth 登录，运行时动态切换                    |
+| **企业级安全**      | 工具分级审批机制（自动批准/手动批准），支持单次/会话/拒绝三种模式       |
+| **OpenAI 兼容**     | 支持任意 OpenAI 兼容 API，灵活配置多 Provider 切换                      |
+
+## 🚀 快速开始
 
 ### 1. 安装
 
 ```bash
 npm install -g @memo-code/memo
-# 或
-pnpm add -g @memo-code/memo
-# 或
-yarn global add @memo-code/memo
-# 或
-bun add -g @memo-code/memo
+# 或 pnpm / yarn / bun
 ```
-
-说明：npm 分发包是预构建产物，已包含运行所需的 CLI/Web 资源。  
-只有在直接运行本仓库源码时，才需要执行 `pnpm run build`。
 
 ### 2. 配置 API Key
 
 ```bash
 export OPENAI_API_KEY=your_key
+# 或配置其他兼容 API
 ```
 
-### 3. 启动使用
+### 3. 运行
 
 ```bash
 memo
-# 首次运行会引导配置 provider/model，并保存到 ~/.memo/config.toml
 ```
 
-## 使用方式
+首次运行会自动引导配置 Provider 和 Model，配置保存至 `~/.memo/config.toml`。
 
-- 交互式：`memo`（默认 TUI，支持多轮、工具可视化、快捷键）。
-- 非交互纯文本模式（非 TTY）：`echo "你的问题" | memo`（适合脚本）。
-- 单次执行：`memo --once "你的问题"` 或 `memo -once "你的问题"`（执行一轮后退出；在可信仓库建议搭配 `--dangerous`）。
-- 继续最近会话：`memo --prev` 或 `memo -prev`（加载当前目录最近会话上下文）。
-- 危险模式：`memo --dangerous` 或 `memo -d`（跳过工具审批，谨慎使用）。
-- 查看版本：`memo --version` 或 `memo -v`。
-- 启动 Web 服务：`memo web --host 127.0.0.1 --port 5494 --open`（npm 分发包已包含 web 资源；源码运行需先 `pnpm run build`）。
-- 启动目录约定：若启动根目录存在 `AGENTS.md`，Memo 会自动将其拼接进系统提示词。
-- 用户人格约定：若 `$MEMO_HOME/SOUL.md`（或 `~/.memo/SOUL.md`）存在，Memo 会将其作为人格/语气/风格的软偏好层注入系统提示词。它不会覆盖安全规则、工具策略、`AGENTS.md` 约束或当轮用户明确指令；建议保持内容简洁，避免提示词膨胀。
-- Skills：Memo 会自动发现 `SKILL.md` 并把可用 skills 列表拼接进系统提示词。
-- MCP 启动选择：当配置了 MCP server 时，启动会弹出多选以决定本次会话激活哪些 server。
-- Web app 支持多 workspace 项目管理，并可并发运行多个会话（单个 server 进程上限 20）。
+## 📖 使用模式
 
-## Web 控制台
+| 模式       | 命令                                           | 场景                   |
+| ---------- | ---------------------------------------------- | ---------------------- |
+| 交互模式   | `memo`                                         | 默认，完整 TUI 体验    |
+| 单次模式   | `memo --once "prompt"`                         | 执行一次后退出         |
+| 继续会话   | `memo --prev`                                  | 加载当前目录的最新会话 |
+| Web 控制台 | `memo web --host 127.0.0.1 --port 5494 --open` | 浏览器操作             |
 
-```bash
-memo web --host 127.0.0.1 --port 5494 --open
+## 🏗️ 架构设计
+
+```
+memo-code/
+├── packages/
+│   ├── core/          # 核心逻辑：Session 状态机、Config 处理
+│   ├── tools/         # Tool 路由、MCP Client管理、内置工具实现（exec_command, read_file, apply_patch...）
+│   ├── tui/           # 终端运行时：CLI 入口、交互式 TUI
+│   ├── web-ui/        # Web 前端：React 组件
+│   └── web-server/    # Web 后端：会话管理、API 适配器
+└── docs/              # 技术文档
 ```
 
-- npm 分发包已内置 web server 与 web UI 资源。
-- 若从源码仓库运行，请先执行一次 `pnpm run build`。
-- Web 认证配置默认存储在 `~/.memo/server.yaml`（可通过 `MEMO_SERVER_CONFIG` 覆盖路径）。
-- 首次启动会自动生成该文件，包含认证密钥和随机初始密码。
-- 登录页使用 `server.yaml` 中的 `auth.username` / `auth.password`。
-- 侧边栏包含独立的 `MCP Servers` 与 `Skills` 入口：
-    - MCP：创建/编辑/删除/登录/登出与激活开关。
-    - Skills：创建/删除、详情预览与激活开关。
+**技术亮点：**
 
-## 配置文件
+- **架构**：清晰的 Core / Tools / TUI 分层，状态机驱动会话管理
+- **测试**：Core + Tools 覆盖率 > 70%，完整的单元 + 集成测试
+- **协议**：原生支持 MCP (Model Context Protocol)，可接入任意 MCP 工具服务器
+- **Token 估算**：基于 tiktoken 的实时上下文监控，支持可配置的自动压缩策略
+- **分发**：npm 包预构建 Web 资源，热加载无感知
 
-位置：`~/.memo/config.toml`（可通过 `MEMO_HOME` 环境变量修改）
+## 🔧 内置工具
 
-### Provider 配置
+- `exec_command` / `write_stdin` - 执行 Shell 命令
+- `apply_patch` - 字符串级代码编辑（单文件/批量）
+- `read_file` / `list_dir` / `grep_files` - 文件读取与检索
+- `webfetch` - 网页抓取
+- MCP 资源访问 - `list_mcp_resources`, `read_mcp_resource`
+- `update_plan` - 结构化任务进度管理
+- `get_memory` - 持久化记忆读取
+
+## ⚙️ 配置示例
 
 ```toml
 current_provider = "openai_compatible"
+auto_compact_threshold_percent = 80
 
 [[providers.openai_compatible]]
 name = "openai_compatible"
 env_api_key = "OPENAI_API_KEY"
 model = "gpt-4.1-mini"
 base_url = "https://api.openai.com/v1"
+
+# MCP 服务器
+[mcp_servers.github]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-github"]
+
+# Skills
+active_skills = ["./skills/doc-writing/SKILL.md"]
 ```
 
-支持配置多个 Provider，通过 `current_provider` 切换。
-
-### MCP 工具配置
-
-支持本地和远程 MCP 服务器：
-
-```toml
-# 本地 MCP 服务器
-[mcp_servers.local_tools]
-command = "/path/to/mcp-server"
-args = []
-
-# 远程 HTTP MCP 服务器
-[mcp_servers.remote]
-type = "streamable_http"
-url = "https://your-mcp-server.com/mcp"
-# headers = { Authorization = "Bearer xxx" }
-
-# 可选：启动时默认激活的 MCP server
-active_mcp_servers = ["local_tools", "remote"]
-# 可选：设为 [] 表示启动时不激活任何 MCP server
-
-# 可选：MCP OAuth 凭据存储模式：auto | keyring | file
-mcp_oauth_credentials_store_mode = "auto"
-# 可选：为 `memo mcp login` 指定固定本地回调端口
-# mcp_oauth_callback_port = 33333
-```
-
-也可以通过 CLI 管理 MCP 配置（对齐 Codex CLI 风格）：
-
-```bash
-# 列出 MCP servers
-memo mcp list
-
-# 添加本地 MCP server（stdio）
-memo mcp add local_tools -- /path/to/mcp-server --flag
-
-# 添加远程 MCP server（streamable HTTP）
-memo mcp add remote --url https://your-mcp-server.com/mcp --bearer-token-env-var MCP_TOKEN
-
-# streamable_http server 的 OAuth 登录/登出
-memo mcp login remote --scopes read,write
-memo mcp logout remote
-
-# 查看/删除
-memo mcp get remote
-memo mcp remove remote
-```
-
-`memo mcp list` 会输出每个 server 的 `auth_status`：`unsupported`、`not_logged_in`、`bearer_token`、`oauth`。
-
-## Skills
-
-Memo 支持 Agent Skills，并会在启动时自动发现 `SKILL.md`。
-
-### 发现路径
-
-- 项目级：项目根目录下 `.<agent>/skills`（例如：`.agents/skills`、`.claude/skills`、`.codex/skills`）
-- 用户级：`$MEMO_HOME/skills`（或 `~/.memo/skills`）
-- 不扫描：Memo Home 之外的 `~/.xxx/skills` 隐藏目录
-
-### 最小 Skill 文件示例
-
-```md
----
-name: doc-writing
-description: Generate and update technical documentation.
 ---
 
-# Doc Writing
-```
-
-Memo 会读取 frontmatter 的 `name` 和 `description`，并以元数据形式注入：
-
-- `- <name>: <description> (file: <absolute-path-to-SKILL.md>)`
-
-在对话里可通过 `$skill-name` 显式提及某个 skill（例如 `$doc-writing`）。
-
-可选：在 `config.toml` 中持久化默认激活 skills：
-
-```toml
-# 未设置：默认激活所有已发现 skills
-# []：默认不激活任何 skill
-active_skills = [
-  "/absolute/path/to/.codex/skills/doc-writing/SKILL.md"
-]
-```
-
-## 内置工具
-
-- `exec_command` / `write_stdin`：执行命令（默认执行工具族）
-- `shell` / `shell_command`：兼容执行工具（按环境开关切换）
-- `apply_patch`：结构化文件改动
-- `read_file` / `list_dir` / `grep_files`：文件读取与检索
-- `list_mcp_resources` / `list_mcp_resource_templates` / `read_mcp_resource`：MCP 资源访问
-- `webfetch`：获取网页
-- `update_plan`：更新当前会话内的计划状态
-- `get_memory`：读取 `~/.memo/Agents.md`（或 `MEMO_HOME` 下）记忆内容
-
-通过 MCP 协议可扩展更多工具。
-
-## 工具审批系统
-
-新增工具审批机制，保护用户免受危险操作影响：
-
-- **自动审批**：读类工具（如 `read_file`、`list_dir`、`grep_files`、`webfetch` 等）
-- **手动审批**：高风险工具（如 `apply_patch`、`exec_command`、`write_stdin`）
-- **审批选项**：
-    - `once`：批准该工具直到当前 turn 结束
-    - `session`：在本次会话内批准该工具
-    - `deny`：拒绝该工具，直到再次批准
-- **审批提醒（TUI）**：当需要审批时，Memo 会触发终端提示音，并尝试发送桌面通知。
-- **危险模式**：`--dangerous` 参数跳过所有审批（仅限信任场景）
-
-## 会话历史
-
-所有会话自动保存到 `~/.memo/sessions/`，按项目绝对路径分层组织：
-
-```
-~/.memo/sessions/
-  └── -Users-mcell-Desktop-workspace-memo-code/
-      ├── 2026-02-08T02-21-18-abc123.jsonl
-      └── 2026-02-08T02-42-09-def456.jsonl
-```
-
-JSONL 格式便于分析和调试。
-
-## 开发
-
-### 本地运行
+## 🛠️ 开发指南
 
 ```bash
+# 安装依赖
 pnpm install
+
+# 本地运行
 pnpm start
+
+# 构建发布包
+pnpm run build
+
+# 测试
+pnpm test              # 全部测试
+pnpm run test:coverage # 覆盖率报告 (阈值 ≥70%)
+
+# 格式化
+pnpm run format        # 写入
+pnpm run format:check  # CI 检查
 ```
 
-### 构建
+## 📄 开源许可
 
-```bash
-pnpm run build  # 构建 web-server/web-ui 产物并生成 dist/index.js
-```
-
-### 测试
-
-```bash
-pnpm test            # 全量测试
-pnpm run test:coverage  # 带覆盖率测试（阈值：>=70%）
-pnpm run test:core   # 测试 core 包
-pnpm run test:tools  # 测试 tools 包
-pnpm run test:tui    # 测试 tui 包
-```
-
-### 代码格式化
-
-```bash
-npm run format        # 格式化所有文件
-npm run format:check  # 检查格式（CI）
-```
-
-## 项目结构
-
-```
-memo-code/
-├── packages/
-│   ├── core/       # 核心逻辑：Session、工具路由、配置
-│   ├── tools/      # 内置工具实现
-│   └── tui/        # 终端运行时（CLI 入口、交互 TUI、slash、MCP 子命令）
-├── docs/           # 技术文档
-└── dist/           # 构建输出
-```
-
-## CLI 快捷键与命令
-
-- `/help`：显示帮助与快捷键说明。
-- `/models`：列出现有 Provider/Model，回车切换；支持直接 `/models openai_compatible` 精确选择。
-- `/context`：弹出 80k/120k/150k/200k 选项并立即设置上限。
-- `/review <prNumber>`：执行 GitHub PR 审查并直接发布评论（优先使用已激活的 GitHub MCP，失败时回退 `gh` CLI）。
-- `/mcp`：查看当前会话加载的 MCP 服务器配置。
-- `resume` 历史：输入 `resume` 查看并加载本目录的历史会话。
-- 退出与清屏：`exit` / `/exit`，`Ctrl+L` 新会话，`Esc Esc` 取消运行或清空输入。
-- **工具审批**：危险操作会弹出审批对话框，可选择 `once`/`session`/`deny`。
-- **审批提醒**：交互式 TUI 中出现审批请求时，会触发提示音并尝试发送桌面通知。
-
-> 仅当会话包含用户消息时才写入 `sessions/` JSONL 日志，避免空会话文件。
-
-## 技术栈
-
-- **Runtime**: Node.js 20+
-- **语言**: TypeScript
-- **UI**: React + Ink
-- **Protocol**: MCP (Model Context Protocol)
-- **Token 计数**: tiktoken
-
-## 相关文档
-
-- [User Guide (EN)](./site/content/docs/en/README.mdx) - 英文文档入口
-- [用户指南 (ZH)](./site/content/docs/zh/README.mdx) - 中文文档入口
-- [Core 架构](./docs/core.md) - 核心实现详解
-- [CLI 适配更新](./docs/cli-update.md) - Tool Use API 迁移说明
-- [开发指南](./CONTRIBUTING.md) - 贡献指南
-- [项目约定](./AGENTS.md) - 代码规范和开发流程
-
-## License
-
-MIT
+MIT License
