@@ -1,28 +1,30 @@
 <div align="center">
-  <img src="public/logo.svg" width="80" height="80" alt="Memo Logo">
+  <img src="public/logo.svg" width="96" height="96" alt="Memo Code logo">
   <h1>Memo Code</h1>
-  <p>A lightweight coding agent that runs in your terminal.</p>
+  <p><strong>A lightweight coding agent for terminal and web workflows.</strong></p>
+  <p>
+    <a href="https://memo.mcell.top/">Website</a>
+    ·
+    <a href="https://memo.mcell.top/zh/docs/getting-started/">Documentation</a>
+    ·
+    <a href="README.zh.md">中文文档</a>
+  </p>
+  <p>
+    <a href="https://github.com/minorcell/memo-code/actions/workflows/test.yml">
+      <img src="https://github.com/minorcell/memo-code/actions/workflows/test.yml/badge.svg?branch=main" alt="Test">
+    </a>
+    <a href="https://codecov.io/gh/minorcell/memo-code">
+      <img src="https://codecov.io/gh/minorcell/memo-code/graph/badge.svg" alt="Coverage">
+    </a>
+    <a href="https://www.npmjs.com/package/@memo-code/memo">
+      <img src="https://img.shields.io/npm/v/%40memo-code%2Fmemo" alt="npm version">
+    </a>
+  </p>
 </div>
 
 <p align="center">
-  <a href="https://github.com/minorcell/memo-code/actions/workflows/ci.yml">
-    <img src="https://github.com/minorcell/memo-code/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI">
-  </a>
-  <a href="https://codecov.io/gh/minorcell/memo-code">
-    <img src="https://codecov.io/gh/minorcell/memo-code/graph/badge.svg" alt="Coverage">
-  </a>
-  <a href="https://www.npmjs.com/package/@memo-code/memo">
-    <img src="https://img.shields.io/npm/v/%40memo-code%2Fmemo" alt="npm version">
-  </a>
-  <a href="README.zh.md">中文文档</a>
+  <img src="public/demo.png" width="100%" alt="Memo Code demo">
 </p>
-
-<p align="center">
-  🌐 <strong>Website</strong>: <a href="https://memo.mcell.top/">https://memo.mcell.top/</a><br>
-  📚 <strong>Documentation</strong>: <a href="https://memo.mcell.top/zh/docs/getting-started/">https://memo.mcell.top/zh/docs/getting-started/</a>
-</p>
-
-<img src="public/demo.png" width="100%" alt="Memo Code demo">
 
 ---
 

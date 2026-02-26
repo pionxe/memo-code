@@ -1,28 +1,30 @@
 <div align="center">
-  <img src="public/logo.svg" width="80" height="80" alt="Memo Logo">
+  <img src="public/logo.svg" width="96" height="96" alt="Memo Code logo">
   <h1>Memo Code</h1>
-  <p>运行在终端里的轻量级编码代理。</p>
+  <p><strong>面向终端与 Web 工作流的轻量级编码代理。</strong></p>
+  <p>
+    <a href="https://memo.mcell.top/">官方网站</a>
+    ·
+    <a href="https://memo.mcell.top/zh/docs/getting-started/">完整文档</a>
+    ·
+    <a href="README.md">English</a>
+  </p>
+  <p>
+    <a href="https://github.com/minorcell/memo-code/actions/workflows/test.yml">
+      <img src="https://github.com/minorcell/memo-code/actions/workflows/test.yml/badge.svg?branch=main" alt="Test">
+    </a>
+    <a href="https://codecov.io/gh/minorcell/memo-code">
+      <img src="https://codecov.io/gh/minorcell/memo-code/graph/badge.svg" alt="Coverage">
+    </a>
+    <a href="https://www.npmjs.com/package/@memo-code/memo">
+      <img src="https://img.shields.io/npm/v/%40memo-code%2Fmemo" alt="npm version">
+    </a>
+  </p>
 </div>
 
 <p align="center">
-  <a href="https://github.com/minorcell/memo-code/actions/workflows/ci.yml">
-    <img src="https://github.com/minorcell/memo-code/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI">
-  </a>
-  <a href="https://codecov.io/gh/minorcell/memo-code">
-    <img src="https://codecov.io/gh/minorcell/memo-code/graph/badge.svg" alt="Coverage">
-  </a>
-  <a href="https://www.npmjs.com/package/@memo-code/memo">
-    <img src="https://img.shields.io/npm/v/%40memo-code%2Fmemo" alt="npm version">
-  </a>
-  <a href="README.md">English</a>
+  <img src="public/demo.png" width="100%" alt="Memo Code 演示图">
 </p>
-
-<p align="center">
-  🌐 <strong>官方网站</strong>: <a href="https://memo.mcell.top/">https://memo.mcell.top/</a><br>
-  📚 <strong>完整文档</strong>: <a href="https://memo.mcell.top/zh/docs/getting-started/">https://memo.mcell.top/zh/docs/getting-started/</a>
-</p>
-
-<img src="public/demo.png" width="100%" alt="Memo Code 演示图">
 
 ## 🌱 起源
 

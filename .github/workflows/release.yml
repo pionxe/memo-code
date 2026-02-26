@@ -1,4 +1,4 @@
-name: Auto Tag on Version Change
+name: Release
 
 on:
     push:
@@ -11,9 +11,13 @@ permissions:
     contents: write
 
 jobs:
-    auto-tag:
-        name: Create tag from package version
+    tag:
+        name: Create tag from version
         runs-on: ubuntu-latest
+        outputs:
+            version_changed: ${{ steps.version.outputs.changed }}
+            version: ${{ steps.version.outputs.current }}
+            tag_name: ${{ format('v{0}', steps.version.outputs.current) }}
         steps:
             - uses: actions/checkout@v4
               with:
@@ -72,3 +76,52 @@ jobs:
             - name: Skip when tag already exists
               if: steps.version.outputs.changed == 'true' && steps.tag.outputs.exists == 'true'
               run: echo "Tag ${{ steps.tag.outputs.name }} already exists; skip tag creation."
+
+    publish:
+        name: Publish to npm
+        if: needs.tag.outputs.version_changed == 'true'
+        needs: tag
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v2
+              with:
+                  version: 9
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'pnpm'
+                  registry-url: 'https://registry.npmjs.org/'
+
+            - name: Install ripgrep
+              run: sudo apt-get update && sudo apt-get install -y ripgrep
+
+            - run: pnpm install
+            - run: pnpm run build
+
+            - name: Check if npm version exists
+              id: npm
+              run: |
+                  PACKAGE_NAME=$(node -p "require('./package.json').name")
+                  PACKAGE_VERSION="${{ needs.tag.outputs.version }}"
+
+                  if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
+                      echo "already_published=true" >> "$GITHUB_OUTPUT"
+                      echo "Version ${PACKAGE_NAME}@${PACKAGE_VERSION} already exists on npm; skip publish."
+                  else
+                      echo "already_published=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Publish to npm
+              if: steps.npm.outputs.already_published != 'true'
+              run: pnpm publish --no-git-checks
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: ${{ needs.tag.outputs.tag_name }}
+                  generate_release_notes: true
