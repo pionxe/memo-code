@@ -1,7 +1,7 @@
 import { lookup } from 'node:dns/promises'
 import { isIP } from 'node:net'
 import { Readability } from '@mozilla/readability'
-import * as ipaddr from 'ipaddr.js'
+import ipaddr from 'ipaddr.js'
 import { JSDOM } from 'jsdom'
 import robotsParser from 'robots-parser'
 import TurndownService from 'turndown'
